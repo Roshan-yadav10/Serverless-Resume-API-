@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Resume API - API Gateway (API key + usage plan), Lambda (Python), DynamoDB.
+
+Parameters:
+  StageName:
+    Type: String
+    Default: prod
+  RateLimit:
+    Type: Number
+    Default: 5
+    Description: Steady-state requests per second allowed by the usage plan.
+  BurstLimit:
+    Type: Number
+    Default: 10
+    Description: Maximum burst of requests.
+  DailyQuota:
+    Type: Number
+    Default: 1000
+    Description: Maximum requests per day per API key.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    Timeout: 10
+    MemorySize: 128
+
+Resources:
+  ResumeTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: section, AttributeType: S}
+        - {AttributeName: sortKey, AttributeType: S}
+      KeySchema:
+        - {AttributeName: section, KeyType: HASH}    # profile | experience | education | skills
+        - {AttributeName: sortKey, KeyType: RANGE}   # orders items inside a section
+
+  ResumeApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "${AWS::StackName}-api"
+      StageName: !Ref StageName
+      Auth:
+        ApiKeyRequired: true          # every method requires the x-api-key header
+        UsagePlan:
+          CreateUsagePlan: PER_API    # also creates the API key and links it to the plan
+          UsagePlanName: !Sub "${AWS::StackName}-usage-plan"
+          Description: Throttling and daily quota for the resume API
+          Throttle:
+            RateLimit: !Ref RateLimit
+            BurstLimit: !Ref BurstLimit
+          Quota:
+            Limit: !Ref DailyQuota
+            Period: DAY
+
+  ResumeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Description: Serves resume sections from DynamoDB
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref ResumeTable
+      Policies:
+        - DynamoDBReadPolicy:         # read-only: least privilege
+            TableName: !Ref ResumeTable
+      Events:
+        GetResume:
+          Type: Api
+          Properties: {RestApiId: !Ref ResumeApi, Path: /resume, Method: get}
+        GetProfile:
+          Type: Api
+          Properties: {RestApiId: !Ref ResumeApi, Path: /profile, Method: get}
+        GetExperience:
+          Type: Api
+          Properties: {RestApiId: !Ref ResumeApi, Path: /experience, Method: get}
+        GetEducation:
+          Type: Api
+          Properties: {RestApiId: !Ref ResumeApi, Path: /education, Method: get}
+        GetSkills:
+          Type: Api
+          Properties: {RestApiId: !Ref ResumeApi, Path: /skills, Method: get}
+
+Outputs:
+  ApiUrl:
+    Value: !Sub "https://${ResumeApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}"
+  ApiKeyId:
+    Description: "Fetch the value: aws apigateway get-api-key --api-key <id> --include-value --query value --output text"
+    Value: !Ref ResumeApiApiKey
+  TableName:
+    Value: !Ref ResumeTable

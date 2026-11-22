@@ -1,0 +1,45 @@
+{
+  "profile": {
+    "name": "Alex Morgan",
+    "headline": "Cloud Engineer",
+    "email": "alex.morgan@example.com",
+    "location": "Pune, India",
+    "summary": "Cloud engineer focused on serverless architectures and infrastructure as code.",
+    "links": {"github": "https://github.com/example", "linkedin": "https://linkedin.com/in/example"}
+  },
+  "experience": [
+    {
+      "company": "Example Tech",
+      "title": "Cloud Engineer",
+      "location": "Pune, India",
+      "start_date": "2023-06",
+      "end_date": "Present",
+      "highlights": [
+        "Built serverless APIs on AWS Lambda and API Gateway serving 1M requests per month.",
+        "Cut deployment time by 60% by moving infrastructure to AWS SAM."
+      ]
+    },
+    {
+      "company": "Sample Systems",
+      "title": "Junior Developer",
+      "location": "Mumbai, India",
+      "start_date": "2021-07",
+      "end_date": "2023-05",
+      "highlights": ["Developed REST services in Python and wrote automated tests."]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Example University",
+      "degree": "B.Tech",
+      "field": "Computer Engineering",
+      "start_year": 2017,
+      "end_year": 2021
+    }
+  ],
+  "skills": [
+    {"category": "Cloud", "items": ["AWS Lambda", "API Gateway", "DynamoDB", "CloudFormation", "SAM"]},
+    {"category": "Languages", "items": ["Python", "JavaScript", "SQL"]},
+    {"category": "Practices", "items": ["CI/CD", "Infrastructure as Code", "Least-privilege IAM"]}
+  ]
+}
